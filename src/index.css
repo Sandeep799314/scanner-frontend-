@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===============================
+   🔥 HORIZONTAL SCAN LINE
+   =============================== */
+
+@keyframes scanX {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-scan-x {
+  animation: scanX 2.5s linear infinite;
+}
+
+/* ===============================
+   ✨ FLOATING STAR
+   =============================== */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.7;
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.delay-1000 {
+  animation-delay: 1s;
+}
+/* ===============================
+   🔥 REAL VERTICAL SCAN EFFECT
+   =============================== */
+
+@keyframes scanVertical {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.animate-scan-vertical {
+  position: absolute;
+  animation: scanVertical 2.8s linear infinite;
+}
