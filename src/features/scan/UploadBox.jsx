@@ -1,115 +1,96 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { X } from "lucide-react";
 
-export default function UploadBox({
-  label,
-  subLabel,
-  required = false,
-  preview,
-  onFileChange,
-  onBoxClick,
-  onRemove
-}) {
+export default function UploadBox({ preview, onFileChange, onBoxClick, onRemove }) {
   const fileInputRef = useRef(null);
+  const [hovered, setHovered] = useState(false);
 
   const handleClick = () => {
-    if (onBoxClick) {
-      onBoxClick();
-    } else {
-      fileInputRef.current.click();
-    }
+    if (onBoxClick) onBoxClick();
+    else fileInputRef.current?.click();
   };
 
   const handleRemove = (e) => {
     e.stopPropagation();
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (onRemove) onRemove();
   };
 
   return (
-    <div className="flex flex-col w-full group/main">
-      
-      <label className="text-[10px] md:text-[11px] font-bold text-gray-400 mb-2 md:mb-3 flex items-center gap-1 uppercase tracking-[0.2em] ml-1">
-        {label}
-        {required && <span className="text-red-400">*</span>}
-      </label>
+    <>
+      <style>{`
+        .ub-overlay { opacity: 0; transition: opacity 0.2s; }
+        .ub-box:hover .ub-overlay { opacity: 1; }
+        .ub-remove:hover { background: rgba(0,0,0,0.92) !important; }
+      `}</style>
 
       <div
+        className="ub-box relative w-full cursor-pointer overflow-hidden flex flex-col items-center justify-center transition-all duration-200"
+        style={{
+          height: 200,
+          borderRadius: 16,
+          backgroundColor: "#F9FAFB",
+          border: preview
+            ? "1.5px solid #F5A623"
+            : hovered
+            ? "1.5px solid #1A1A1A"
+            : "1.5px solid #E5E7EB",
+          boxShadow: hovered ? "0 6px 20px rgba(0,0,0,0.07)" : "0 1px 3px rgba(0,0,0,0.04)",
+        }}
         onClick={handleClick}
-        /* Fixed height 'h-[280px]' add kiya hai taaki box ka size na badle */
-        className={`
-          relative cursor-pointer flex flex-col items-center justify-center
-          w-full h-[280px] bg-white rounded-[2rem] border border-gray-100
-          shadow-sm hover:shadow-xl transition-all duration-500
-          text-center overflow-hidden
-          ${preview ? "border-[#eab308]" : "hover:border-black"}
-        `}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
-
         {preview ? (
-          /* Preview state mein image poore box mein fit rahegi */
-          <div className="absolute inset-0 w-full h-full">
-            <img
-              src={preview}
-              alt="Preview"
-              /* object-cover se image box ko poora bharegi bina shape bigade */
-              className="w-full h-full object-cover"
-            />
+          <>
+            <img src={preview} alt="Preview"
+                 className="absolute inset-0 w-full h-full object-cover" />
 
-            {/* REMOVE BUTTON */}
+            {/* Remove btn */}
             <button
               onClick={handleRemove}
-              className="absolute top-4 right-4 z-20 bg-black/80 hover:bg-black text-white p-2 rounded-full shadow-lg transition-transform active:scale-90"
+              className="ub-remove absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors"
+              style={{ background: "rgba(0,0,0,0.65)", color: "#fff" }}
             >
-              <X size={16} />
+              <X size={13} />
             </button>
 
-            {/* Replace Overlay - Only shows on hover */}
-            <div className="absolute inset-0 z-10 pointer-events-none bg-black/40 opacity-0 group-hover/main:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-              <span className="bg-white text-[10px] font-black px-6 py-2.5 rounded-full text-black shadow-2xl uppercase tracking-widest translate-y-2 group-hover/main:translate-y-0 transition-transform">
+            {/* Hover overlay */}
+            <div className="ub-overlay absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+                 style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)" }}>
+              <span className="bg-white font-black uppercase rounded-full shadow-lg"
+                    style={{ fontSize: 10, letterSpacing: "0.16em", padding: "7px 18px", color: "#111827" }}>
                 Replace Image
               </span>
             </div>
-          </div>
+          </>
         ) : (
-          /* Placeholder state */
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-2 group-hover/main:bg-[#eab308] transition-colors">
-              <svg
-                className="w-7 h-7 text-gray-400 group-hover/main:text-white transition-colors"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
+          <div className="flex flex-col items-center gap-3 text-center px-4">
+            {/* Icon box — same style as LandingUI feature cards */}
+            <div
+              className="w-12 h-12 rounded-[13px] flex items-center justify-center transition-colors duration-200"
+              style={{ background: hovered ? "#F5A623" : "#EFEFEF" }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke={hovered ? "#fff" : "#9CA3AF"}
+                strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transition: "stroke 0.2s" }}>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
             </div>
-
             <div>
-              <span className="text-xl font-black text-gray-900 block">
-                Upload Image
-              </span>
-              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                Max size 10MB
-              </span>
+              <p className="font-bold text-gray-900 m-0 mb-1" style={{ fontSize: 15 }}>Upload Image</p>
+              <p className="font-semibold text-gray-400 uppercase m-0"
+                 style={{ fontSize: 10, letterSpacing: "0.14em" }}>Max Size 10MB</p>
             </div>
           </div>
         )}
-
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={onFileChange}
-        className="hidden"
-      />
-    </div>
+      <input ref={fileInputRef} type="file" accept="image/*"
+             onChange={onFileChange} className="hidden" />
+    </>
   );
 }
