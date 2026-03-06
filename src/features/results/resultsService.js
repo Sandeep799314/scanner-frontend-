@@ -4,6 +4,7 @@ import axios from "axios";
 const API_BASE_URL = "https://scanner-backend-60j9.onrender.com/api/cards";
 
 
+
 /**
  * 1. UPDATE CARD DATA
  * Agar user scan ke baad results mein koi correction karta hai.
