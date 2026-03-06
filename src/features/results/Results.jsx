@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import QuickActions from "./QuickActions";
 import ContactCard from "./ContactCard";
 import ExcelEditorModal from "./ExcelEditorModal";
-import { ArrowLeft, PlusCircle, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { ArrowLeft, PlusCircle, ChevronLeft, ChevronRight, ChevronDown, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 export default function Results({ data, allResults, onRescan, onBack }) {
 
@@ -18,10 +19,32 @@ export default function Results({ data, allResults, onRescan, onBack }) {
     setCurrentImageIndex(0);
   }, [editedContact]);
 
+  // 🔥 Excel Download Logic
+  const handleDownloadExcel = () => {
+    if (!allResults || allResults.length === 0) return;
+
+    const sheetData = allResults.map((item) => {
+      const c = item.savedCard || item.data || item;
+      return {
+        Timestamp: new Date().toLocaleString(),
+        Name: c.name || c.fullName || "-",
+        Phone: c.phone || c.mobile || "-",
+        Email: c.email || "-",
+        Company: c.company || "-",
+        Designation: c.designation || "-",
+        Address: c.address || "-",
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(sheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Batch_Export");
+    XLSX.writeFile(workbook, `Business_Cards_${Date.now()}.xlsx`);
+  };
+
   if (!data) return null;
 
   const images = useMemo(() => {
-
     if (!editedContact) return [null];
 
     const imgs = Array.isArray(editedContact.images)
@@ -35,7 +58,6 @@ export default function Results({ data, allResults, onRescan, onBack }) {
     ].filter(Boolean);
 
     return combined.length > 0 ? combined : [null];
-
   }, [editedContact]);
 
 
@@ -163,7 +185,7 @@ ${address}
 
               <button
                 onClick={onRescan}
-                className="w-full py-3 bg-[#eab308] hover:bg-black text-white rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[#eab308] hover:bg-black text-white rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm"
               >
                 <PlusCircle size={16} />
                 Scan New Card
@@ -224,8 +246,8 @@ ${address}
                     onClick={() => setShowRawData(!showRawData)}
                     className="text-[9px] font-bold text-gray-400 uppercase flex items-center gap-2 tracking-widest"
                   >
-                    {showRawData ? "Form View" : "Technical Data"}
-                    <ChevronDown size={14} />
+                    {showRawData ? "Form View" : "Show more"}
+                    <ChevronDown size={14} className={showRawData ? "rotate-180 transition-transform" : "transition-transform"} />
                   </button>
 
                 </div>
@@ -262,19 +284,25 @@ ${address}
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
 
-            <div className="px-6 py-4 border-b border-gray-50 bg-gray-50">
+            <div className="px-4 py-4 md:px-6 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
 
-              <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
-                Excel Repository
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
+                  Excel Repository
+                </h2>
+                <span className="bg-gray-200 text-gray-600 text-[9px] px-2 py-0.5 rounded-full font-bold">
+                  {allResults?.length || 0}
+                </span>
+              </div>
 
             </div>
 
-            <div className="p-4 md:p-6">
+            <div className="p-2 md:p-6 space-y-6">
 
-              <div className="overflow-x-auto rounded-xl border border-gray-100">
+              {/* TABLE PEHLE DIKHEGI */}
+              <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-inner">
 
-                <div className="min-w-[900px] bg-white">
+                <div className="min-w-[800px] md:min-w-[900px] bg-white">
 
                   <ExcelEditorModal
                     data={allResults}
@@ -284,6 +312,21 @@ ${address}
 
                 </div>
 
+              </div>
+              
+              <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest text-center">
+                {allResults?.length > 0 ? "← Swipe Table to view/edit details →" : "No records to display"}
+              </p>
+
+              {/* 📥 DOWNLOAD BUTTON AB EXCEL TABLE KE NICHE HAI */}
+              <div className="flex justify-center pt-2">
+                <button 
+                    onClick={handleDownloadExcel}
+                    className="w-full md:w-auto max-w-md flex items-center justify-center gap-3 bg-green-600 hover:bg-black text-white px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 border-b-4 border-green-800 hover:border-black"
+                >
+                    <Download size={18} />
+                    Download Excel
+                </button>
               </div>
 
             </div>

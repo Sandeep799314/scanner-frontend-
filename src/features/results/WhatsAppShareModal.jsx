@@ -1,79 +1,72 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const WhatsAppShareModal = ({ isOpen, onClose, currentData, allResults }) => {
-  const [waNumber, setWaNumber] = useState("");
-  const [sendType, setSendType] = useState("all");
+const WhatsAppShareModal = ({
+  isOpen,
+  onClose,
+  currentData,
+  allResults,
+  myNumber,
+}) => {
+  const [detailsMessage, setDetailsMessage] = useState("");
   const [customMessage, setCustomMessage] = useState("");
 
-  // Helper function to filter out missing or "N/A" data
+  // Data check karne ka behtar tarika
   const isDataValid = (val) => {
-    if (!val) return false;
+    if (val === undefined || val === null) return false;
     const checkVal = val.toString().toLowerCase().trim();
-    return !["n/a", "not available", "none", "", "null", "undefined"].includes(checkVal);
+    const invalidValues = ["n/a", "not available", "none", "", "null", "undefined"];
+    return !invalidValues.includes(checkVal);
   };
 
-  const handleSend = () => {
-    if (!waNumber.trim()) {
-      alert("Please enter WhatsApp number");
-      return;
-    }
+  useEffect(() => {
+    if (!isOpen) return; // Jab modal open ho tabhi run kare
 
-    const cleanedNumber = waNumber.replace(/\D/g, "");
+    const dataToProcess = allResults && allResults.length > 0 ? allResults : [currentData];
     let message = "";
 
-    if (sendType === "all") {
-      // Professional Header
-      message = `*BUSINESS CARD DETAILS* 📇\n`;
-      message += `_Extracted via CardScan AI_\n`;
-      message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
+    dataToProcess.forEach((card, index) => {
+      if (!card) return;
 
-      const dataToProcess = allResults && allResults.length > 0 ? allResults : [currentData];
+      if (dataToProcess.length > 1) {
+        message += `*Entry ${index + 1}*\n`; // Bold heading for WhatsApp
+      }
 
-      dataToProcess.forEach((card, index) => {
-        // Numbering only if multiple cards exist
-        if (dataToProcess.length > 1) {
-          message += `\n*ENTRY #${index + 1}*\n`;
-        }
+      const fields = [
+        { label: "Name", value: card.name },
+        { label: "Job", value: card.designation || card.jobTitle },
+        { label: "Phone", value: card.phone },
+        { label: "Email", value: card.email },
+        { label: "Company", value: card.company },
+        { label: "Website", value: card.website },
+        { label: "Address", value: card.address },
+      ];
 
-        const fields = [
-          { label: "👤 Name", value: card?.name },
-          { label: "💼 Job", value: card?.designation || card?.jobTitle },
-          { label: "📞 Phone", value: card?.phone },
-          { label: "📧 Email", value: card?.email },
-          { label: "🏢 Co.", value: card?.company },
-          { label: "🌐 Web", value: card?.website },
-          { label: "📍 Addr", value: card?.address },
-        ];
-
-        fields.forEach((field) => {
-          if (isDataValid(field.value)) {
-            message += `*${field.label}* : ${field.value}\n`;
-          }
-        });
-
-        // Separator between cards
-        if (dataToProcess.length > 1 && index !== dataToProcess.length - 1) {
-          message += `\n--------------------\n`;
+      fields.forEach((field) => {
+        if (isDataValid(field.value)) {
+          message += `*${field.label}:* ${field.value}\n`;
         }
       });
 
-      message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-      message += `\nHope this helps! 😊\n_Sent via CardScan AI_`;
-    } else {
-      if (!customMessage.trim()) {
-        alert("Please enter a custom message");
-        return;
+      if (index !== dataToProcess.length - 1) {
+        message += `\n-------------------\n\n`;
       }
-      message = customMessage;
-    }
+    });
 
-    const whatsappURL = `https://wa.me/${cleanedNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappURL, "_blank");
+    setDetailsMessage(message);
+  }, [currentData, allResults, isOpen]);
+
+  const handleSend = (targetNumber = "") => {
+    const finalMessage = customMessage 
+      ? `${customMessage}\n\n${detailsMessage}` 
+      : detailsMessage;
+      
+    const cleanedNumber = targetNumber.replace(/\D/g, "");
+    // Agar number hai toh direct chat, nahi toh contact picker
+    const baseUrl = cleanedNumber ? `https://wa.me/${cleanedNumber}` : `https://wa.me/`;
+    const whatsappURL = `${baseUrl}?text=${encodeURIComponent(finalMessage)}`;
     
-    // Reset and Close
-    setWaNumber("");
-    setCustomMessage("");
+    window.open(whatsappURL, "_blank");
     onClose();
   };
 
@@ -81,78 +74,67 @@ const WhatsAppShareModal = ({ isOpen, onClose, currentData, allResults }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center z-[100] bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 backdrop-blur-sm p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={onClose} // Background click par band hoga
         >
           <motion.div
-            className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl"
+            className="bg-white w-full max-w-md rounded-[32px] p-6 md:p-8 shadow-2xl relative"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
+            onClick={(e) => e.stopPropagation()} // Modal click par band nahi hoga
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-gray-800">WhatsApp Share</h2>
+              <h2 className="text-2xl font-black text-gray-800 tracking-tight">
+                WhatsApp Share
+              </h2>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                className="text-gray-400 hover:text-red-500 transition-colors text-3xl"
               >
                 &times;
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">
-                  Recipient Number
+                <label className="text-[11px] font-bold text-gray-500 uppercase ml-1 mb-2 block tracking-wider">
+                  Details to Share
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 919876543210"
-                  value={waNumber}
-                  onChange={(e) => setWaNumber(e.target.value)}
-                  className="w-full border border-gray-100 bg-gray-50 rounded-2xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-green-400 font-semibold text-gray-700"
+                <textarea
+                  rows="5"
+                  value={detailsMessage}
+                  onChange={(e) => setDetailsMessage(e.target.value)}
+                  className="w-full border border-gray-200 bg-gray-50 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-medium text-sm transition-all"
                 />
               </div>
 
-              <div className="flex gap-6 py-2">
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-sm text-gray-600">
-                  <input
-                    type="radio"
-                    checked={sendType === "all"}
-                    onChange={() => setSendType("all")}
-                    className="w-4 h-4 accent-green-500"
-                  />
-                  Smart Format
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase ml-1 mb-2 block tracking-wider">
+                  Add a Personal Note
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-sm text-gray-600">
-                  <input
-                    type="radio"
-                    checked={sendType === "custom"}
-                    onChange={() => setSendType("custom")}
-                    className="w-4 h-4 accent-green-500"
-                  />
-                  Custom Text
-                </label>
-              </div>
-
-              {sendType === "custom" && (
                 <textarea
-                  rows="4"
-                  placeholder="Write something special..."
+                  rows="2"
+                  placeholder="Hey, check these contact details..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="w-full border border-gray-100 bg-gray-50 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400 font-medium"
+                  className="w-full border border-gray-200 bg-gray-50 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-medium text-sm transition-all"
                 />
-              )}
+              </div>
 
-              <button
-                onClick={handleSend}
-                className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-green-100 transition-all active:scale-95 mt-2"
-              >
-                Send on WhatsApp 🚀
-              </button>
+              <div className="flex flex-col gap-3 pt-2">
+                <button
+                  onClick={() => handleSend()}
+                  className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-green-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <span>Send to Contact</span>
+                </button>
+
+                
+              </div>
             </div>
           </motion.div>
         </motion.div>
