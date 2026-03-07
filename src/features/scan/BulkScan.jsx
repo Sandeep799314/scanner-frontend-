@@ -1,164 +1,154 @@
 import React from "react";
 import { ArrowLeft, Layers, Sparkles } from "lucide-react";
 
+const SHARED_CSS = `
+  /* Poppins Import */
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+  
+  /* Global Font apply with fallback */
+  .pg-root, .pg-root * { 
+    font-family: 'Poppins', sans-serif !important; 
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .pg-root { min-height: calc(100vh - 50px); background: #fff; }
+  
+  .pg-bar { 
+    position: sticky; top: 0; z-index: 40; height: 60px; 
+    background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); 
+    border-bottom: 1px solid #F3F4F6; display: flex; align-items: center; 
+  }
+  
+  .pg-bar-inner { 
+    width: 100%; max-width: 640px; margin: 0 auto; padding: 0 24px; 
+    display: flex; align-items: center; justify-content: flex-start; gap: 12px; 
+  }
+  
+  .pg-back { 
+    display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; 
+    border-radius: 99px; border: 1.5px solid #E5E7EB; background: #fff; 
+    cursor: pointer; font-size: 11px; font-weight: 700; 
+    letter-spacing: 0.12em; text-transform: uppercase; color: #9CA3AF; 
+    transition: all 0.15s; outline: none; white-space: nowrap; 
+  }
+  
+  .pg-back:hover { background: #F5A623; color: #fff; border-color: #F5A623; }
+  
+  .pg-toggle { 
+    display: flex; align-items: center; border-radius: 99px; 
+    background: #F9FAFB; border: 1px solid #E5E7EB; padding: 4px; gap: 2px; margin-left: auto; 
+  }
+  
+  .pg-tab { 
+    display: flex; align-items: center; gap: 5px; padding: 7px 20px; 
+    border-radius: 99px; font-size: 12px; font-weight: 700; 
+    border: none; cursor: pointer; transition: all 0.15s; white-space: nowrap; 
+  }
+  
+  .pg-tab-on  { background: #F5A623; color: #fff; box-shadow: 0 2px 8px rgba(245,166,35,0.35); }
+  .pg-tab-off { background: transparent; color: #9CA3AF; }
+  
+  .pg-content { max-width: 640px; margin: 0 auto; padding: 36px 24px 64px; }
+  
+  /* Logo-style Heading (Poppins 900 + Tight Spacing) */
+  .pg-h1 { 
+    font-size: 38px; 
+    font-weight: 900; 
+    color: #111; 
+    letter-spacing: -0.04em; /* Match Bulk Card Image */
+    line-height: 1.05; 
+    margin: 0 0 8px; 
+  }
+  
+  .pg-sub { 
+    font-size: 10px; 
+    font-weight: 700; 
+    color: #9CA3AF; 
+    text-transform: uppercase; 
+    letter-spacing: 0.25em; /* Wide spacing for sub-text */
+    margin: 0; 
+  }
+
+  .pg-footer { 
+    display: flex; align-items: center; justify-content: center; 
+    gap: 12px; opacity: 0.28; margin-top: 40px; 
+  }
+  
+  .pg-footer-line { height: 1px; width: 28px; background: #9CA3AF; }
+  .pg-footer-text { 
+    font-size: 9px; font-weight: 900; color: #6B7280; 
+    text-transform: uppercase; letter-spacing: 0.3em; 
+  }
+
+  @media (max-width: 600px) {
+    .pg-back    { display: none !important; }
+    .pg-toggle  { margin-left: auto; margin-right: auto; }
+    .pg-bar-inner { justify-content: center !important; }
+    .pg-h1      { font-size: 28px !important; }
+    .pg-content { padding: 24px 16px 48px !important; }
+  }
+`;
+
 export default function BulkScan({ onBack, onSingle }) {
   return (
     <>
       <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
+        ${SHARED_CSS}
+        @keyframes fadeUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+        @keyframes bs-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         .bs-wrap { animation: fadeUp 0.3s ease-out both; }
-
-        @keyframes bs-float {
-          0%, 100% { transform: translateY(0px); }
-          50%       { transform: translateY(-6px); }
-        }
         .bs-icon { animation: bs-float 3s ease-in-out infinite; }
-
-        @media (max-width: 540px) {
-          .bs-page   { padding-top: 28px !important; padding-bottom: 48px !important; }
-          .bs-h1     { font-size: 26px !important; }
-          /* Hide back button on mobile */
-          .bs-back   { display: none !important; }
-          /* Center toggle pill on mobile */
-          .bs-toprow { justify-content: center !important; }
-        }
       `}</style>
 
-      <div className="min-h-screen w-full bg-white relative overflow-hidden"
-           style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+      <div className="pg-root">
+        {/* Decorative Background */}
+        <div style={{pointerEvents:"none",position:"fixed",top:0,right:0,width:288,height:288,borderRadius:"50%",opacity:0.5,background:"#fffbeb",filter:"blur(80px)",zIndex:0}}/>
+        <div style={{pointerEvents:"none",position:"fixed",bottom:0,left:0,width:208,height:208,borderRadius:"50%",opacity:0.25,background:"#eff6ff",filter:"blur(80px)",zIndex:0}}/>
 
-        <div className="pointer-events-none fixed top-0 right-0 w-72 h-72 rounded-full opacity-50"
-             style={{ background: "#fffbeb", filter: "blur(80px)" }} />
-        <div className="pointer-events-none fixed bottom-0 left-0 w-52 h-52 rounded-full opacity-25"
-             style={{ background: "#eff6ff", filter: "blur(80px)" }} />
-
-        <div className="bs-wrap bs-page max-w-[600px] mx-auto px-5 relative z-10"
-             style={{ paddingTop: 52, paddingBottom: 64 }}>
-
-          {/* TOP ROW */}
-          <div className="bs-toprow flex items-center justify-between mb-10 gap-3 flex-wrap">
-
-            {/* Back — hidden on mobile */}
-            <button
-              onClick={onBack}
-              className="bs-back flex items-center gap-2 font-bold uppercase border-none bg-transparent cursor-pointer transition-colors"
-              style={{ fontSize: 11, letterSpacing: "0.18em", color: "#9CA3AF" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#1A1A1A"}
-              onMouseLeave={e => e.currentTarget.style.color = "#9CA3AF"}
-            >
-              <ArrowLeft size={14} />
-              Back
-            </button>
-
-            {/* Toggle pill — Bulk active */}
-            <div className="flex items-center rounded-full shadow-sm"
-                 style={{ background: "#fff", border: "1px solid #E5E7EB", padding: 5, gap: 3 }}>
-
-              {/* Single — inactive */}
-              <button
-                onClick={onSingle}
-                className="flex items-center gap-1.5 rounded-full font-bold whitespace-nowrap border-none cursor-pointer transition-all"
-                style={{ padding: "7px 20px", fontSize: 12, background: "transparent", color: "#9CA3AF" }}
-                onMouseEnter={e => e.currentTarget.style.color = "#1A1A1A"}
-                onMouseLeave={e => e.currentTarget.style.color = "#9CA3AF"}
-              >
-                Single Scan
-              </button>
-
-              {/* Bulk — active amber */}
-              <button
-                className="flex items-center gap-1.5 rounded-full font-bold whitespace-nowrap border-none"
-                style={{
-                  padding: "7px 20px", fontSize: 12, cursor: "default",
-                  background: "#F5A623", color: "#fff",
-                  boxShadow: "0 2px 8px rgba(245,166,35,0.35)",
-                }}
-              >
-                <Layers size={12} />
-                Bulk Scan
-              </button>
+        {/* TOP BAR */}
+        <div className="pg-bar">
+          <div className="pg-bar-inner">
+            <button className="pg-back" onClick={onBack}><ArrowLeft size={13}/> Back</button>
+            <div className="pg-toggle">
+              <button className="pg-tab pg-tab-off" onClick={onSingle}>Single Scan</button>
+              <button className="pg-tab pg-tab-on"><Layers size={12}/> Bulk Scan</button>
             </div>
           </div>
+        </div>
 
-          {/* HEADING */}
-          <div className="mb-10">
-            <h2 className="bs-h1 font-black text-gray-900 tracking-tight leading-tight m-0 mb-2"
-                style={{ fontSize: 36 }}>
-              Bulk Card{" "}
-              <span style={{ color: "#F5A623" }}>Scanner</span>
-            </h2>
-            <p className="font-semibold text-gray-400 uppercase m-0"
-               style={{ fontSize: 11, letterSpacing: "0.18em" }}>
-              Scan multiple cards at once • Batch export
-            </p>
+        {/* CONTENT */}
+        <div className="pg-content bs-wrap" style={{position:"relative",zIndex:1}}>
+          <div style={{marginBottom:32}}>
+            {/* Header matching your image design */}
+            <h2 className="pg-h1">Bulk Card <span style={{color:"#F5A623"}}>Scanner</span></h2>
+            <p className="pg-sub">Scan multiple cards at once • Batch export</p>
           </div>
 
-          {/* COMING SOON CARD */}
-          <div className="w-full flex flex-col items-center text-center py-8 px-6"
-               style={{ borderRadius: 20, background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
-
-            <div className="bs-icon w-12 h-12 rounded-[14px] flex items-center justify-center mb-4"
-                 style={{ background: "#fff", border: "1px solid #E5E7EB",
-                          boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
-              <Layers size={22} style={{ color: "#F5A623" }} />
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"36px 24px",borderRadius:20,background:"#F9FAFB",border:"1.5px solid #E5E7EB"}}>
+            <div className="bs-icon" style={{width:52,height:52,borderRadius:16,background:"#fff",border:"1px solid #E5E7EB",boxShadow:"0 4px 14px rgba(0,0,0,0.06)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
+              <Layers size={24} style={{color:"#F5A623"}}/>
+            </div>
+            
+            <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"4px 12px",borderRadius:99,background:"#fffbeb",border:"1px solid #fef3c7",marginBottom:16}}>
+              <Sparkles size={10} style={{color:"#d97706"}}/>
+              <span style={{fontSize:9,fontWeight:900,color:"#d97706",textTransform:"uppercase",letterSpacing:"0.15em"}}>Coming Soon</span>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
-                 style={{ background: "#fffbeb", border: "1px solid #fef3c7" }}>
-              <Sparkles size={10} style={{ color: "#d97706" }} />
-              <span className="font-black uppercase"
-                    style={{ fontSize: 9, letterSpacing: "0.15em", color: "#d97706" }}>
-                Coming Soon
-              </span>
-            </div>
-
-            <h3 className="font-black text-gray-900 tracking-tight m-0 mb-2"
-                style={{ fontSize: 18 }}>
-              Bulk Scan is Under Development
-            </h3>
-
-            <p className="font-medium text-gray-400 leading-relaxed m-0 mb-6"
-               style={{ fontSize: 13, maxWidth: 340 }}>
+            <h3 style={{fontSize:18,fontWeight:900,color:"#111",margin:"0 0 10px",lineHeight:1.2}}>Bulk Scan is Under Development</h3>
+            
+            <p style={{fontSize:13,color:"#9CA3AF",lineHeight:1.7,margin:0,maxWidth:340,fontWeight:500}}>
               Soon you'll be able to scan{" "}
-              <span className="text-gray-700 font-bold">multiple business cards</span>{" "}
+              <span style={{color:"#374151",fontWeight:700}}>multiple business cards</span>{" "}
               simultaneously and export all contacts to Excel instantly.
             </p>
-
-            <div className="flex flex-col gap-2 w-full" style={{ maxWidth: 280 }}>
-              {["Upload 10–100 cards at once", "AI batch OCR extraction", "One-click Excel export"].map((feat, i) => (
-                <div key={i} className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-left"
-                     style={{ background: "#fff", border: "1px solid #E5E7EB" }}>
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
-                       style={{ background: "#fffbeb" }}>
-                    <span style={{ fontSize: 9, color: "#F5A623", fontWeight: 900 }}>✓</span>
-                  </div>
-                  <span className="font-semibold text-gray-700" style={{ fontSize: 12 }}>{feat}</span>
-                </div>
-              ))}
-            </div>
           </div>
 
-          <button disabled
-            className="w-full flex items-center justify-center gap-2.5 border-none font-black uppercase mt-4"
-            style={{ height: 48, borderRadius: 14, fontSize: 11, letterSpacing: "0.1em",
-                     cursor: "not-allowed", background: "#E5E7EB", color: "#9CA3AF" }}>
-            <Sparkles size={13} className="shrink-0" />
-            Notify Me When Available
-          </button>
-
-          {/* FOOTER */}
-          <div className="flex items-center justify-center gap-3 mt-12" style={{ opacity: 0.3 }}>
-            <div className="h-px w-7 bg-gray-400" />
-            <span className="font-black uppercase text-gray-500"
-                  style={{ fontSize: 9, letterSpacing: "0.3em" }}>
-              Secure AI Cloud Processing
-            </span>
-            <div className="h-px w-7 bg-gray-400" />
+          <div className="pg-footer">
+            <div className="pg-footer-line"/>
+            <span className="pg-footer-text">Secure AI Cloud Processing</span>
+            <div className="pg-footer-line"/>
           </div>
-
         </div>
       </div>
     </>

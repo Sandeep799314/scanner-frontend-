@@ -2,14 +2,22 @@ import React, { useState, useMemo, useEffect } from "react";
 import QuickActions from "./QuickActions";
 import ContactCard from "./ContactCard";
 import ExcelEditorModal from "./ExcelEditorModal";
-import { ArrowLeft, PlusCircle, ChevronLeft, ChevronRight, ChevronDown, Download } from "lucide-react";
+import {
+  ArrowLeft,
+  PlusCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Download,
+  X
+} from "lucide-react";
 import * as XLSX from "xlsx";
 
 export default function Results({ data, allResults, onRescan, onBack }) {
-
   const [isEditing, setIsEditing] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showRawData, setShowRawData] = useState(false);
+  const [zoomImage, setZoomImage] = useState(null);
 
   const [editedContact, setEditedContact] = useState(
     Array.isArray(data) ? data[0] : data
@@ -26,8 +34,8 @@ export default function Results({ data, allResults, onRescan, onBack }) {
       const c = item.savedCard || item.data || item;
       return {
         Timestamp: new Date().toLocaleString(),
-        Name: c.name || c.fullName || "-",
-        Phone: c.phone || c.mobile || "-",
+        Name: c.name || "-",
+        Phone: c.phone || "-",
         Email: c.email || "-",
         Company: c.company || "-",
         Designation: c.designation || "-",
@@ -44,252 +52,209 @@ export default function Results({ data, allResults, onRescan, onBack }) {
   if (!data) return null;
 
   const images = useMemo(() => {
-    if (!editedContact) return [null];
-
-    const imgs = Array.isArray(editedContact.images)
-      ? editedContact.images
-      : [];
-
+    if (!editedContact) return [];
+    const imgs = Array.isArray(editedContact.images) ? editedContact.images : [];
     const combined = [
       editedContact.imageUrl,
       editedContact.backImageUrl,
       ...imgs
     ].filter(Boolean);
-
-    return combined.length > 0 ? combined : [null];
+    return combined;
   }, [editedContact]);
 
   const goPrev = () =>
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? images.length - 1 : prev - 1
-    );
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
 
   const goNext = () =>
-    setCurrentImageIndex((prev) =>
-      prev === images.length - 1 ? 0 : prev + 1
-    );
-
-  const raw = editedContact?.rawText || "";
-
-  const phones = [
-    editedContact?.phone,
-    ...(raw.match(/(\+?\d[\d\s\-]{7,}\d)/g) || [])
-  ].filter(Boolean);
-
-  const uniquePhones = [...new Set(phones)];
-
-  const emails = [
-    editedContact?.email,
-    ...(raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig) || [])
-  ].filter(Boolean);
-
-  const uniqueEmails = [...new Set(emails)];
-
-  let address = "-";
-
-  const addressMatch = raw.match(
-    /(Mumbai.*|Delhi.*|India.*|Bangalore.*|Pune.*|Hyderabad.*)/i
-  );
-
-  if (addressMatch) {
-    address = addressMatch[0];
-  }
-
-  const formattedRawData = `
-
-Phones:
-${uniquePhones.join("\n") || "-"}
-
-Emails:
-${uniqueEmails.join("\n") || "-"}
-
-Address:
-${address}
-
-`;
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
 
   return (
     <>
       <style>{`
-        @media (max-width: 540px) {
-          .res-back { display: none !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+        
+        .res-root, .res-root * {
+          font-family: 'Poppins', sans-serif !important;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        .water-sweep {
+          position: absolute;
+          background: rgba(255,255,255,0.3);
+          width: 100%;
+          height: 100%;
+          left: -100%;
+          top: 0;
+          transition: all 0.6s;
+          animation: sweep 0.6s ease-out;
+        }
+
+        @keyframes sweep {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+
+        .tight-heading {
+          letter-spacing: -0.02em;
         }
       `}</style>
 
-      <div className="h-full w-full flex flex-col bg-[#FAF9F6] font-sans overflow-y-auto">
-
+      <div className="res-root h-full w-full flex flex-col bg-[#FAF9F6] overflow-y-auto">
         <main className="flex-1 w-full px-4 py-6 lg:px-10">
-
           <div className="max-w-[1100px] mx-auto space-y-6 pb-16">
-
-            {/* BACK BUTTON — hidden on mobile */}
+            
+            {/* BACK BUTTON */}
             <button
               onClick={onBack}
-              className="res-back flex items-center gap-2 text-gray-400 hover:text-black font-bold text-[10px] uppercase tracking-[0.2em] bg-white border border-gray-100 px-3 py-1.5 rounded-full shadow-sm"
+              className="flex items-center gap-2 text-white font-black text-[10px] uppercase tracking-[0.2em] bg-[#eab308] hover:bg-black px-4 py-2 rounded-full shadow-sm transition-all active:scale-95"
             >
               <ArrowLeft size={14} />
               Back
             </button>
 
-            {/* MAIN GRID */}
-            <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start">
-
-              {/* LEFT COLUMN */}
+            <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
               <div className="flex flex-col gap-3">
-
-                <div className="relative group aspect-[1.6/1] lg:aspect-auto lg:h-[400px] bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden flex items-center justify-center">
-
-                  {images[currentImageIndex] ? (
+                <div className="relative h-[400px] bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden flex items-center justify-center">
+                  {images.length === 1 && (
                     <img
-                      src={images[currentImageIndex]}
-                      alt="Card"
-                      className="w-full h-full object-contain p-3"
+                      src={images[0]}
+                      alt="card"
+                      onClick={() => setZoomImage(images[0])}
+                      className="max-h-[90%] max-w-[90%] object-contain cursor-zoom-in"
                     />
-                  ) : (
-                    <span className="text-gray-300 font-black uppercase text-[10px]">
-                      No Card Asset Found
-                    </span>
                   )}
 
-                  {images.length > 1 && (
-                    <div className="absolute inset-0 flex items-center justify-between px-3">
-                      <button onClick={goPrev} className="p-1.5 bg-white rounded-full shadow">
-                        <ChevronLeft size={18} />
-                      </button>
-                      <button onClick={goNext} className="p-1.5 bg-white rounded-full shadow">
-                        <ChevronRight size={18} />
-                      </button>
+                  {images.length === 2 && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-3">
+                      <img
+                        src={images[0]}
+                        alt="front"
+                        onClick={() => setZoomImage(images[0])}
+                        className="max-h-[45%] object-contain cursor-zoom-in"
+                      />
+                      <img
+                        src={images[1]}
+                        alt="back"
+                        onClick={() => setZoomImage(images[1])}
+                        className="max-h-[45%] object-contain cursor-zoom-in"
+                      />
                     </div>
                   )}
 
-                  <div className="absolute bottom-3 right-3 bg-black text-white px-2 py-1 rounded-full text-[9px] font-bold">
-                    {currentImageIndex + 1}/{images.length}
-                  </div>
-
+                  {images.length > 2 && (
+                    <>
+                      <img
+                        src={images[currentImageIndex]}
+                        alt="card"
+                        onClick={() => setZoomImage(images[currentImageIndex])}
+                        className="max-h-[90%] max-w-[90%] object-contain cursor-zoom-in"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-between px-3">
+                        <button onClick={goPrev} className="p-1.5 bg-white rounded-full shadow hover:bg-gray-50">
+                          <ChevronLeft size={18} />
+                        </button>
+                        <button onClick={goNext} className="p-1.5 bg-white rounded-full shadow hover:bg-gray-50">
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {/* SCAN NEW */}
+                {/* SCAN NEW CARD BUTTON */}
                 <button
-                  onClick={onRescan}
-                  className="w-full py-3 bg-[#eab308] hover:bg-black text-white rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  onClick={(e) => {
+                    const button = e.currentTarget;
+                    const wave = document.createElement("span");
+                    wave.className = "water-sweep";
+                    button.appendChild(wave);
+                    setTimeout(() => {
+                      wave.remove();
+                      onRescan();
+                    }, 600);
+                  }}
+                  className="relative overflow-hidden w-full py-4 bg-[#eab308] hover:bg-yellow-400 text-white rounded-xl font-black text-[12px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-md transition-all duration-200 active:scale-[0.96]"
                 >
                   <PlusCircle size={16} />
                   Scan New Card
                 </button>
-
               </div>
 
-              {/* RIGHT COLUMN */}
               <div className="space-y-4">
-
-                {/* CONTACT DETAILS */}
-                <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-
-                  <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50">
-                    <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <div className="bg-white rounded-2xl shadow-md border border-gray-100">
+                  <div className="px-6 py-4 border-b flex justify-between items-center">
+                    <h2 className="tight-heading text-[11px] font-black text-gray-400 uppercase tracking-widest">
                       Contact Details
                     </h2>
                     <button
                       onClick={() => setIsEditing(!isEditing)}
-                      className="text-[10px] font-bold text-[#eab308] uppercase tracking-widest"
+                      className="text-[11px] font-black text-[#eab308] hover:text-yellow-600 transition-colors"
                     >
-                      {isEditing ? "Save" : "Edit"}
+                      {isEditing ? "SAVE CHANGES" : "EDIT DETAILS"}
                     </button>
                   </div>
 
                   <div className="p-5">
-                    {!showRawData ? (
-                      <ContactCard
-                        contact={editedContact}
-                        isEditing={isEditing}
-                        onUpdate={(newContact) => setEditedContact(newContact)}
-                      />
-                    ) : (
-                      <div className="p-4 bg-gray-50 rounded-xl text-[11px] font-mono text-gray-600 border border-gray-100 whitespace-pre-line">
-                        {formattedRawData}
-                      </div>
-                    )}
+                    <ContactCard
+                      contact={editedContact}
+                      isEditing={isEditing}
+                      onUpdate={(c) => setEditedContact(c)}
+                    />
                   </div>
-
-                  <div className="px-6 py-3 border-t border-gray-50 flex justify-center">
-                    <button
-                      onClick={() => setShowRawData(!showRawData)}
-                      className="text-[9px] font-bold text-gray-400 uppercase flex items-center gap-2 tracking-widest"
-                    >
-                      {showRawData ? "Form View" : "Show more"}
-                      <ChevronDown size={14} className={showRawData ? "rotate-180 transition-transform" : "transition-transform"} />
-                    </button>
-                  </div>
-
                 </div>
 
-                {/* QUICK EXPORT */}
                 <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
-                    Quick Export
-                  </h2>
-                  <div className="flex flex-wrap lg:flex-nowrap items-center gap-3">
-                    <QuickActions
-                      data={editedContact}
-                      allResults={allResults}
-                      variant="circular"
-                    />
-                  </div>
+                  <QuickActions
+                    data={editedContact}
+                    allResults={allResults}
+                    variant="circular"
+                  />
                 </div>
-
               </div>
-
             </div>
 
-            {/* EXCEL REPOSITORY */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
-
-              <div className="px-4 py-4 md:px-6 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
-                    Excel Repository
-                  </h2>
-                  <span className="bg-gray-200 text-gray-600 text-[9px] px-2 py-0.5 rounded-full font-bold">
-                    {allResults?.length || 0}
-                  </span>
-                </div>
+            {/* EXCEL SECTION */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-md">
+              <div className="px-6 py-4 border-b flex justify-between items-center">
+                <h2 className="tight-heading text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                  Excel Repository
+                </h2>
+                <button
+                  onClick={handleDownloadExcel}
+                  className="px-4 py-2 flex items-center gap-2 rounded-lg bg-[#e8f5e9] hover:bg-[#c8e6c9] transition-colors"
+                >
+                  <span className="text-[10px] font-black text-[#107C41] uppercase tracking-wider">Export Excel</span>
+                  <Download size={16} className="text-[#107C41]" />
+                </button>
               </div>
-
-              <div className="p-2 md:p-6 space-y-6">
-
-                <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-inner">
-                  <div className="min-w-[800px] md:min-w-[900px] bg-white">
-                    <ExcelEditorModal
-                      data={allResults}
-                      inline={true}
-                      editedContact={editedContact}
-                    />
-                  </div>
-                </div>
-
-                <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest text-center">
-                  {allResults?.length > 0 ? "← Swipe Table to view/edit details →" : "No records to display"}
-                </p>
-
-                <div className="flex justify-center pt-2">
-                  <button
-                    onClick={handleDownloadExcel}
-                    className="w-full md:w-auto max-w-md flex items-center justify-center gap-3 bg-green-600 hover:bg-black text-white px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 border-b-4 border-green-800 hover:border-black"
-                  >
-                    <Download size={18} />
-                    Download Excel
-                  </button>
-                </div>
-
+              <div className="p-6">
+                <ExcelEditorModal
+                  data={allResults}
+                  inline={true}
+                  editedContact={editedContact}
+                />
               </div>
-
             </div>
-
           </div>
-
         </main>
-
       </div>
+
+      {/* ZOOM MODAL */}
+      {zoomImage && (
+        <div
+          onClick={() => setZoomImage(null)}
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+        >
+          <button className="absolute top-6 right-6 text-white hover:rotate-90 transition-transform">
+            <X size={32} />
+          </button>
+          <img
+            src={zoomImage}
+            alt="zoom"
+            className="max-h-[90vh] max-w-[90vw] object-contain shadow-2xl rounded-sm"
+          />
+        </div>
+      )}
     </>
   );
 }
